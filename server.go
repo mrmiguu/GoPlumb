@@ -16,7 +16,6 @@ var (
 	importTime = regexp.MustCompile(`\btime\.\b`)
 
 	head = `package main
-import "fmt"
 `
 
 	tail = `
@@ -30,7 +29,7 @@ func println(args ...interface{}) {
 )
 
 func run(R chan<- string, E chan<- error) {
-	cmd := exec.Command("go", "run", "temp/temp.go")
+	cmd := exec.Command("go", "run", "temp/temp(+imports).go")
 	sout, _ := cmd.StdoutPipe()
 	serr, _ := cmd.StderrPipe()
 	scanout := bufio.NewScanner(sout)
@@ -58,6 +57,22 @@ func run(R chan<- string, E chan<- error) {
 	cmd.Wait()
 }
 
+func addImports() {
+	cmd := exec.Command("goimports", "temp/temp.go")
+	src, err := os.Create("temp/temp(+imports).go")
+	if err != nil {
+		println(err.Error())
+		return
+	}
+	b, err := cmd.Output()
+	if err != nil {
+		println(err.Error())
+		return
+	}
+	src.Write(b)
+	src.Close()
+}
+
 func main() {
 	F := sock.Rstring()
 	R := sock.Wstring()
@@ -69,22 +84,15 @@ func main() {
 		}
 
 		src, _ := os.Create("temp/temp.go")
-		h := head
-		if importTime.MatchString(f) {
-			h += `import "time"
-`
-		}
-		if importSync.MatchString(f) {
-			h += `import "sync"
-`
-		}
-		src.WriteString(h)
+		src.WriteString(head)
 		src.WriteString(`func main() {
 `)
 		src.WriteString(f)
 		src.WriteString(`}`)
 		src.WriteString(tail)
 		src.Close()
+
+		addImports()
 
 		run(R, E)
 	}
