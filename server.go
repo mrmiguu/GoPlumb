@@ -28,6 +28,13 @@ func println(args ...interface{}) {
 `
 )
 
+func init() {
+	err := os.Mkdir("temp", os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func run(R chan<- string, E chan<- error) {
 	cmd := exec.Command("go", "run", "temp/temp(+imports).go")
 	sout, _ := cmd.StdoutPipe()
