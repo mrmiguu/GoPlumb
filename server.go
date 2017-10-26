@@ -29,7 +29,7 @@ func println(args ...interface{}) {
 )
 
 func init() {
-	err := os.Mkdir("temp", os.ModePerm)
+	err := os.MkdirAll("temp", os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
